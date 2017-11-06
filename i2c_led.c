@@ -94,7 +94,8 @@ int main(int argc, char **argv) {
 	if((random() % 3) == 1) G_ran+=50;
 	if((random() % 3) == 2) B_ran+=50;
 
-	for(int l = 0; l < len; l++) {
+	int l  = 0;
+	for(;;) {
 		for(int pos = 0; pos < 8; pos++) {
 			char *bitmap = font8x8_basic[text[l]];
 
@@ -133,8 +134,9 @@ int main(int argc, char **argv) {
 				exit(1);
 				}*/
 
-			sleep(1);
+			usleep(100000);
 		}
+		l = (l + 1) % len;
 	}
 
 	close(file);
