@@ -12,6 +12,10 @@
 #include <string.h>
 #include "font8x8-master/font8x8.h"
 
+#define RED 0
+#define GREEN 8
+#define BLUE  16  
+
 uint8_t pixels[] = {
 	0x00,
 	0x1F, 0x1F, 0x1F, 0x1F, 0x14, 0x03, 0x00, 0x00,
@@ -49,70 +53,69 @@ uint8_t pixels[] = {
 
 uint8_t array[192];
 
+void display() {
+	for (int i = 0 ; i<8; i++) {
+		for(int j = 0 ; j<8; j++){
+			int set = pixels[1+i+(j*8*3)+RED  ] != 0;
+			printf(set ? "x" : " ");
+		}
+		printf("\n");
+	}
+}
 
-int main(int argc, char **argv)
-{
+
+int main(int argc, char **argv) {
+	if(argc != 2) {
+		fprintf(stderr, "Usage: %s text\n", argv[0]);
+		exit(1);
+	}
+	char *text = argv[1];
+	int len = strlen(text);
+
 	int file;
 	const char *filename = "/dev/i2c-2";
 	if ((file = open(filename, O_RDWR)) < 0) {
-		/* ERROR HANDLING: you can check errno to see what went wrong */
 		perror("Failed to open the i2c bus");
 		//		exit(1);
 	}
 
 	int addr = 0x46;          // The I2C address
 	if (ioctl(file, I2C_SLAVE, addr) < 0) {
-		printf("Failed to acquire bus access and/or talk to slave.\n");
-		/* ERROR HANDLING; you can check errno to see what went wrong */
+		perror("Failed to acquire bus access and/or talk to slave.\n");
 		//		exit(1);
 	}
 
-#define RED 0
-#define GREEN 8
-#define BLUE  16  
+	srand(time(NULL));
+	char R_ran=5;
+	char G_ran=5;
+	char B_ran=5;
 
-	for(int l=0; l<strlen(argv[1]); l++){
+	if((random() % 3) == 0) R_ran+=50;
+	if((random() % 3) == 1) G_ran+=50;
+	if((random() % 3) == 2) B_ran+=50;
+
+	for(int l = 0; l < len; l++) {
 		for(int pos = 0; pos < 8; pos++) {
+			char *bitmap = font8x8_basic[text[l]];
 
-			char *bitmap = font8x8_basic[argv[1][l]];
+			// clear matrix
+			memset(pixels, 0, sizeof(pixels));
 
-			for (int i = 0 ; i<8; i++)
-				for(int j = 0 ; j<8; j++){
-					pixels[1+i+(j*8*3)+RED  ]=0;
-					pixels[1+i+(j*8*3)+GREEN]=0;
-					pixels[1+i+(j*8*3)+BLUE ]=0;
-				}
-
-
-			int set=0;
-
-			char R_ran=5;
-			char G_ran=5;
-			char B_ran=5;
-
-
-			srand(time(NULL));
-			if((random()%3)==0) R_ran+=50;
-			if((random()%3)==1) G_ran+=50;
-			if((random()%3)==2) B_ran+=50;
-
-
-
-			for (int i = 0 ; i<8; i++)
+			for (int i = 0 ; i<8; i++) {
 				for(int j = pos ; j<8; j++){
-					set = bitmap[i] & 1 << (j);
+					int set = bitmap[i] & 1 << (j);
 					if(set){
 						pixels[1+i+((j - pos)*8*3)+RED  ]=R_ran;
 						pixels[1+i+(j*8*3)+GREEN]=G_ran;
 						pixels[1+i+(j*8*3)+BLUE ]=B_ran;
 					}
 				}
+			}
 
-			int llen = strlen(argv[1]);
-			bitmap = font8x8_basic[argv[1][(l+1) % llen]];
-			for (int i = 0 ; i<8; i++)
+			bitmap = font8x8_basic[text[(l+1) % len]];
+			for (int i = 0 ; i<8; i++) {
 				for(int j = 0; j< pos; j++){
-					set = bitmap[i] & 1 << (j);
+					int set = bitmap[i] & 1 << (j);
 					if(set){
 						if(pos > 0) {
 							pixels[1+i+(((8-pos)+j)*8*3)+RED  ]=R_ran;
@@ -121,15 +124,9 @@ int main(int argc, char **argv)
 						}
 					}
 				}
-
-			for (int i = 0 ; i<8; i++) {
-				for(int j = 0 ; j<8; j++){
-					set = pixels[1+i+(j*8*3)+RED  ] != 0;
-//					set = pixels[i] & 1 << (7-j);
-					printf(set ? "x" : " ");
-				}
-				printf("\n");
 			}
+
+			display();
 
 			/*	if (write(file,pixels,sizeof(pixels)) != sizeof(pixels) ) {
 				printf("Failed to write to the i2c bus.\n");
@@ -141,10 +138,5 @@ int main(int argc, char **argv)
 	}
 
 	close(file);
-
-
 }
-
-
-
 
