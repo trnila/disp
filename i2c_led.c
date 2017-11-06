@@ -53,6 +53,12 @@ uint8_t pixels[] = {
 
 uint8_t array[192];
 
+int swap(uint8_t *a, uint8_t *b) {
+	int s = *a;
+	*a = *b;
+	*b = s;
+}
+
 void display() {
 	for (int i = 0 ; i<8; i++) {
 		for(int j = 0 ; j<8; j++){
@@ -63,6 +69,51 @@ void display() {
 	}
 }
 
+void rev() {
+	for(int i = 0; i < 4; i++) {
+		for(int j = 0; j < 8; j++) {
+			swap(&pixels[1+i+(j*8*3)+RED  ], &pixels[1+(7 - i)+(j*8*3)+RED  ]);
+			swap(&pixels[1+i+(j*8*3)+GREEN  ], &pixels[1+(7 - i)+(j*8*3)+GREEN  ]);
+			swap(&pixels[1+i+(j*8*3)+BLUE  ], &pixels[1+(7 - i)+(j*8*3)+BLUE  ]);
+		}
+	}
+}
+
+void revCols() {
+	for(int i = 0; i < 8; i++) {
+		for(int j = 0; j < 4; j++) {
+			swap(&pixels[1+i+(j*8*3)+RED  ], &pixels[1+i+((7-j)*8*3)+RED  ]);
+			swap(&pixels[1+i+(j*8*3)+GREEN  ], &pixels[1+i+((7-j)*8*3)+GREEN  ]);
+			swap(&pixels[1+i+(j*8*3)+BLUE  ], &pixels[1+i+((7-j)*8*3)+BLUE  ]);
+		}
+	}
+}
+
+void transpose() {
+	for(int i = 0; i < 8; i++) {
+		for(int j = 0; j < i; j++) {
+			swap(&pixels[1+i+(j*8*3)+RED  ], &pixels[1+j+(i*8*3)+RED  ]);
+		}
+	}
+}
+
+void rotate90() {
+	rev();
+	transpose();
+}
+
+void rotate(int count) {
+	count = count % 4;
+	if(count == 1) {
+		rotate90();	
+	} else if(count == 2) {
+		rotate90();	
+		rotate90();	
+	} else if(count == 3) {
+		transpose();
+		rev();
+	}
+}
 
 int main(int argc, char **argv) {
 	if(argc != 2) {
@@ -107,8 +158,8 @@ int main(int argc, char **argv) {
 					int set = bitmap[i] & 1 << (j);
 					if(set){
 						pixels[1+i+((j - pos)*8*3)+RED  ]=R_ran;
-						pixels[1+i+(j*8*3)+GREEN]=G_ran;
-						pixels[1+i+(j*8*3)+BLUE ]=B_ran;
+						pixels[1+i+((j - pos)*8*3)+GREEN  ]=G_ran;
+						pixels[1+i+((j - pos)*8*3)+BLUE  ]=B_ran;
 					}
 				}
 			}
@@ -120,13 +171,14 @@ int main(int argc, char **argv) {
 					if(set){
 						if(pos > 0) {
 							pixels[1+i+(((8-pos)+j)*8*3)+RED  ]=R_ran;
-							pixels[1+i+(j*8*3)+GREEN]=G_ran;
-							pixels[1+i+(j*8*3)+BLUE ]=B_ran;
+							pixels[1+i+(((8-pos)+j)*8*3)+GREEN  ]=G_ran;
+							pixels[1+i+(((8-pos)+j)*8*3)+BLUE  ]=B_ran;
 						}
 					}
 				}
 			}
 
+			revCols();
 			display();
 
 			/*	if (write(file,pixels,sizeof(pixels)) != sizeof(pixels) ) {
