@@ -16,6 +16,12 @@
 #define GREEN 8
 #define BLUE  16  
 
+typedef struct {
+	char r;
+	char g;
+	char b;
+} Color;
+
 uint8_t pixels[] = {
 	0x00,
 	0x1F, 0x1F, 0x1F, 0x1F, 0x14, 0x03, 0x00, 0x00,
@@ -115,6 +121,22 @@ void rotate(int count) {
 	}
 }
 
+Color randColor() {
+	char r = 5;
+	char g = 5;
+	char b = 5;
+
+	if((random() % 3) == 0) r += 50;
+	if((random() % 3) == 1) g += 50;
+	if((random() % 3) == 2) b += 50;
+
+	Color c;
+	c.r = r;
+	c.g = g;
+	c.b = b;
+	return c;
+}
+
 int main(int argc, char **argv) {
 	if(argc != 2) {
 		fprintf(stderr, "Usage: %s text\n", argv[0]);
@@ -127,23 +149,21 @@ int main(int argc, char **argv) {
 	const char *filename = "/dev/i2c-2";
 	if ((file = open(filename, O_RDWR)) < 0) {
 		perror("Failed to open the i2c bus");
-		//		exit(1);
+		exit(1);
 	}
 
 	int addr = 0x46;          // The I2C address
 	if (ioctl(file, I2C_SLAVE, addr) < 0) {
 		perror("Failed to acquire bus access and/or talk to slave.\n");
-		//		exit(1);
+		exit(1);
 	}
 
 	srand(time(NULL));
-	char R_ran=5;
-	char G_ran=5;
-	char B_ran=5;
 
-	if((random() % 3) == 0) R_ran+=50;
-	if((random() % 3) == 1) G_ran+=50;
-	if((random() % 3) == 2) B_ran+=50;
+	Color *colors = (Color*) malloc(sizeof(Color) * len);
+	for(int i = 0; i < len; i++) {
+		colors[i] = randColor();
+	}
 
 	int l  = 0;
 	for(;;) {
@@ -157,34 +177,38 @@ int main(int argc, char **argv) {
 				for(int j = pos ; j<8; j++){
 					int set = bitmap[i] & 1 << (j);
 					if(set){
-						pixels[1+i+((j - pos)*8*3)+RED  ]=R_ran;
-						pixels[1+i+((j - pos)*8*3)+GREEN  ]=G_ran;
-						pixels[1+i+((j - pos)*8*3)+BLUE  ]=B_ran;
+						pixels[1+i+((j - pos)*8*3)+RED  ] = colors[l].r;
+						pixels[1+i+((j - pos)*8*3)+GREEN  ] = colors[l].g;
+						pixels[1+i+((j - pos)*8*3)+BLUE  ] = colors[l].b;
 					}
 				}
 			}
 
-			bitmap = font8x8_basic[text[(l+1) % len]];
+			int nextL = (l + 1) % len;
+			bitmap = font8x8_basic[text[nextL]];
 			for (int i = 0 ; i<8; i++) {
 				for(int j = 0; j< pos; j++){
 					int set = bitmap[i] & 1 << (j);
 					if(set){
 						if(pos > 0) {
-							pixels[1+i+(((8-pos)+j)*8*3)+RED  ]=R_ran;
-							pixels[1+i+(((8-pos)+j)*8*3)+GREEN  ]=G_ran;
-							pixels[1+i+(((8-pos)+j)*8*3)+BLUE  ]=B_ran;
+							pixels[1+i+(((8-pos)+j)*8*3)+RED  ] = colors[nextL].r;
+							pixels[1+i+(((8-pos)+j)*8*3)+GREEN  ] = colors[nextL].g;
+							pixels[1+i+(((8-pos)+j)*8*3)+BLUE  ] = colors[nextL].b;
 						}
 					}
 				}
 			}
 
-			revCols();
+//			revCols();
+//			rev()
+//			rotate();
+			rev();			
 			display();
 
-			/*	if (write(file,pixels,sizeof(pixels)) != sizeof(pixels) ) {
+			if (write(file,pixels,sizeof(pixels)) != sizeof(pixels) ) {
 				printf("Failed to write to the i2c bus.\n");
 				exit(1);
-				}*/
+			}
 
 			usleep(100000);
 		}
@@ -192,5 +216,6 @@ int main(int argc, char **argv) {
 	}
 
 	close(file);
+	free(colors);
 }
 
