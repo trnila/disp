@@ -149,13 +149,13 @@ int main(int argc, char **argv) {
 	const char *filename = "/dev/i2c-2";
 	if ((file = open(filename, O_RDWR)) < 0) {
 		perror("Failed to open the i2c bus");
-		exit(1);
+		//		exit(1);
 	}
 
 	int addr = 0x46;          // The I2C address
 	if (ioctl(file, I2C_SLAVE, addr) < 0) {
 		perror("Failed to acquire bus access and/or talk to slave.\n");
-		exit(1);
+		//		exit(1);
 	}
 
 	srand(time(NULL));
@@ -165,52 +165,70 @@ int main(int argc, char **argv) {
 		colors[i] = randColor();
 	}
 
+	int sizes[255];
+	int starts[255];
+	for(int i = 0; i < 255; i++) {
+		int start = 0;
+		int stop = 7;
+
+		char *bitmap = font8x8_basic[i];
+		for(int j = 0; j < 8; j++) {
+			for(int row = 0; row < 8; row++) {
+				int set = bitmap[row] & 1 << (j);
+				if(set) {
+					if(start == 0) {
+						start = j;
+					}
+					stop = j;
+				}
+			}
+		}
+		sizes[i] = stop + 2;
+		starts[i] = start;
+	}
+	sizes[' '] = 8;
+	starts[' '] = 1;
+
 	int l  = 0;
 	for(;;) {
-		for(int pos = 0; pos < 8; pos++) {
-			char *bitmap = font8x8_basic[text[l]];
+		for(int shift = starts[text[l]]; shift < sizes[text[l]] + 1; shift++) {
 
 			// clear matrix
 			memset(pixels, 0, sizeof(pixels));
 
-			for (int i = 0 ; i<8; i++) {
-				for(int j = pos ; j<8; j++){
-					int set = bitmap[i] & 1 << (j);
-					if(set){
-						pixels[1+i+((j - pos)*8*3)+RED  ] = colors[l].r;
-						pixels[1+i+((j - pos)*8*3)+GREEN  ] = colors[l].g;
-						pixels[1+i+((j - pos)*8*3)+BLUE  ] = colors[l].b;
+
+			int rendL = l; 
+			char *bitmap = font8x8_basic[text[l]];
+			int pos = shift;
+			for(int j = 0; j<8; j++){ //radky
+				for (int i = 0 ; i<8; i++) {
+					if(pos >= sizes[text[rendL]]) {
+						rendL = (rendL + 1) % len;
+						bitmap = font8x8_basic[text[rendL]];
+						pos = starts[text[l]] - 1;
+					}
+					int set = bitmap[i] & 1 << (pos);
+					if(set) {
+						pixels[1+i+((j)*8*3)+RED  ] = colors[rendL].r;
+						pixels[1+i+((j)*8*3)+GREEN  ] = colors[rendL].g;
+						pixels[1+i+((j)*8*3)+BLUE  ] = colors[rendL].b;
 					}
 				}
+				pos++;
 			}
 
-			int nextL = (l + 1) % len;
-			bitmap = font8x8_basic[text[nextL]];
-			for (int i = 0 ; i<8; i++) {
-				for(int j = 0; j< pos; j++){
-					int set = bitmap[i] & 1 << (j);
-					if(set){
-						if(pos > 0) {
-							pixels[1+i+(((8-pos)+j)*8*3)+RED  ] = colors[nextL].r;
-							pixels[1+i+(((8-pos)+j)*8*3)+GREEN  ] = colors[nextL].g;
-							pixels[1+i+(((8-pos)+j)*8*3)+BLUE  ] = colors[nextL].b;
-						}
-					}
-				}
-			}
-
-//			revCols();
-//			rev()
-//			rotate();
-			rev();			
+			//			revCols();
+			//			rev()
+			//			rotate();
+			//			rev();			
 			display();
 
-			if (write(file,pixels,sizeof(pixels)) != sizeof(pixels) ) {
-				printf("Failed to write to the i2c bus.\n");
-				exit(1);
-			}
+			//			if (write(file,pixels,sizeof(pixels)) != sizeof(pixels) ) {
+			//				printf("Failed to write to the i2c bus.\n");
+			//				exit(1);
+			//			}
 
-			usleep(100000);
+			usleep(50000);
 		}
 		l = (l + 1) % len;
 	}
