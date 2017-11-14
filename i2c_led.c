@@ -137,6 +137,95 @@ Color randColor() {
 	return c;
 }
 
+typedef struct {
+	const char* text;
+	int len;
+	Color* colors;
+} Input;
+
+typedef struct {
+	int sizes[255];
+	int starts[255];
+	int l;
+	int shift;
+	Input* input;
+
+} Mem;
+
+void newInput(Input *input, const char* text) {
+	input->text = text;
+	input->len = strlen(text);
+
+	input->colors = (Color*) malloc(sizeof(Color) * input->len);
+	for(int i = 0; i < input->len; i++) {
+		input->colors[i] = randColor();
+	}
+}
+
+void init(Mem* impl, Input* input) {
+	for(int i = 0; i < 255; i++) {
+		int start = 0;
+		int stop = 7;
+
+		char *bitmap = font8x8_basic[i];
+		for(int j = 0; j < 8; j++) {
+			for(int row = 0; row < 8; row++) {
+				int set = bitmap[row] & 1 << (j);
+				if(set) {
+					if(start == 0) {
+						start = j;
+					}
+					stop = j;
+				}
+			}
+		}
+		impl->sizes[i] = stop + 2;
+		impl->starts[i] = start;
+	}
+	impl->sizes[' '] = 8;
+	impl->starts[' '] = 1;
+
+	impl->l = 0;
+	impl->input = input;
+	impl->shift = 0;
+}
+
+
+void next(Mem *impl) {
+	const char *text = impl->input->text;
+	int l = impl->l;
+	int len = strlen(text);
+
+
+	int rendL = l; 
+	char *bitmap = font8x8_basic[text[l]];
+	int pos = impl->shift;
+	for(int j = 0; j<8; j++){ //radky
+		for (int i = 0 ; i<8; i++) {
+			if(pos >= impl->sizes[text[rendL]]) {
+				rendL = (rendL + 1) % len;
+				bitmap = font8x8_basic[text[rendL]];
+				pos = impl->starts[text[l]] - 1;
+			}
+			int set = bitmap[i] & 1 << (pos);
+			if(set) {
+				pixels[1+i+((j)*8*3)+RED  ] = impl->input->colors[rendL].r;
+				pixels[1+i+((j)*8*3)+GREEN  ] = impl->input->colors[rendL].g;
+				pixels[1+i+((j)*8*3)+BLUE  ] = impl->input->colors[rendL].b;
+			}
+		}
+		pos++;
+	}
+
+	impl->shift++;
+
+	if(impl->shift >= impl->sizes[text[l]] + 1) {
+		impl->l = (l + 1) % len;
+		impl->shift = impl->starts[text[impl->l]]; 
+	}
+}
+
+
 int main(int argc, char **argv) {
 	if(argc != 2) {
 		fprintf(stderr, "Usage: %s text\n", argv[0]);
@@ -160,80 +249,30 @@ int main(int argc, char **argv) {
 
 	srand(time(NULL));
 
-	Color *colors = (Color*) malloc(sizeof(Color) * len);
-	for(int i = 0; i < len; i++) {
-		colors[i] = randColor();
-	}
 
-	int sizes[255];
-	int starts[255];
-	for(int i = 0; i < 255; i++) {
-		int start = 0;
-		int stop = 7;
+	Input input;
+	newInput(&input, text);
 
-		char *bitmap = font8x8_basic[i];
-		for(int j = 0; j < 8; j++) {
-			for(int row = 0; row < 8; row++) {
-				int set = bitmap[row] & 1 << (j);
-				if(set) {
-					if(start == 0) {
-						start = j;
-					}
-					stop = j;
-				}
-			}
-		}
-		sizes[i] = stop + 2;
-		starts[i] = start;
-	}
-	sizes[' '] = 8;
-	starts[' '] = 1;
+	Mem mem;
+	init(&mem, &input);
 
-	int l  = 0;
 	for(;;) {
-		for(int shift = starts[text[l]]; shift < sizes[text[l]] + 1; shift++) {
+		// clear matrix
+		memset(pixels, 0, sizeof(pixels));
+		next(&mem);
+		//			revCols();
+		//			rev()
+		//			rotate();
+		//			rev();			
+		display();
 
-			// clear matrix
-			memset(pixels, 0, sizeof(pixels));
-
-
-			int rendL = l; 
-			char *bitmap = font8x8_basic[text[l]];
-			int pos = shift;
-			for(int j = 0; j<8; j++){ //radky
-				for (int i = 0 ; i<8; i++) {
-					if(pos >= sizes[text[rendL]]) {
-						rendL = (rendL + 1) % len;
-						bitmap = font8x8_basic[text[rendL]];
-						pos = starts[text[l]] - 1;
-					}
-					int set = bitmap[i] & 1 << (pos);
-					if(set) {
-						pixels[1+i+((j)*8*3)+RED  ] = colors[rendL].r;
-						pixels[1+i+((j)*8*3)+GREEN  ] = colors[rendL].g;
-						pixels[1+i+((j)*8*3)+BLUE  ] = colors[rendL].b;
-					}
-				}
-				pos++;
-			}
-
-			//			revCols();
-			//			rev()
-			//			rotate();
-			//			rev();			
-			display();
-
-			//			if (write(file,pixels,sizeof(pixels)) != sizeof(pixels) ) {
-			//				printf("Failed to write to the i2c bus.\n");
-			//				exit(1);
-			//			}
-
-			usleep(50000);
-		}
-		l = (l + 1) % len;
+		//			if (write(file,pixels,sizeof(pixels)) != sizeof(pixels) ) {
+		//				printf("Failed to write to the i2c bus.\n");
+		//				exit(1);
+		//			}
+		usleep(50000);
 	}
 
 	close(file);
-	free(colors);
 }
 
