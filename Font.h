@@ -13,8 +13,6 @@ public:
 	unsigned char (*font)[8];
 
 private:
-
-
 	void calculateLetterSizes() {
 		for(int i = 0; i < 255; i++) {
 			int start = 0;

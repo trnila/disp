@@ -27,7 +27,6 @@ public:
 	}
 
 	void render(Display &display) {
-
 		int byte = 0x00;
 		if(write(fd, &byte, sizeof(byte)) != sizeof(byte)) {
 			throw std::runtime_error("Failed to write to the i2c bus.\n");
