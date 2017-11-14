@@ -5,11 +5,7 @@
 
 class BitsAlgo {
 public:
-	BitsAlgo(Input *input): input(input) {
-		currentLetter = 0;
-		this->input = input;
-		this->shiftInLetter = 0;
-	}
+	BitsAlgo(Input *input): input(input) { }
 
 	void next(Display &display) {
 		const char *text = this->input->text;
@@ -32,7 +28,7 @@ public:
 					display.at(col, row).b = this->input->colors[rendL].b;
 				}
 			}
-			pos++;
+			++pos;
 		}
 
 		this->shiftInLetter++;
@@ -43,7 +39,7 @@ public:
 	}
 
 private:
-	int currentLetter;
-	int shiftInLetter;
-	Input* input;
+	int currentLetter = 0;
+	int shiftInLetter = 0;
+	Input* input = nullptr;
 };
