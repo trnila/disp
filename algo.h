@@ -5,7 +5,10 @@
 
 class BitsAlgo {
 public:
-	BitsAlgo(Input *input): input(input) { }
+	BitsAlgo(Input *input): input(input) {
+		this->currentLetter = 0;
+		this->shiftInLetter = 0;
+	}
 
 	void next(Display &display) {
 		const char *text = this->input->text;
@@ -13,7 +16,7 @@ public:
 
 		int rendL = currentLetter; // current rendered letter
 		int pos = this->shiftInLetter; // shiftInLetter in rendered letter
-		for(int row = 0; row < Display::ROWS; row++){
+		for(int row = 0; row < Display::ROWS; ++row) {
 			for (int col = 0; col < Display::COLS; col++) {
 				if(pos >= input->font->sizes[text[rendL]]) {
 					rendL = (rendL + 1) % input->len;
@@ -31,7 +34,7 @@ public:
 			++pos;
 		}
 
-		this->shiftInLetter++;
+		++this->shiftInLetter;
 		if(this->shiftInLetter >= input->font->sizes[text[currentLetter]] + 1) {
 			this->currentLetter = (currentLetter + 1) % input->len;
 			this->shiftInLetter = input->font->starts[text[this->currentLetter]];
@@ -39,7 +42,7 @@ public:
 	}
 
 private:
-	int currentLetter = 0;
-	int shiftInLetter = 0;
-	Input* input = nullptr;
+	int currentLetter;
+	int shiftInLetter;
+	Input* input;
 };
