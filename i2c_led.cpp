@@ -9,30 +9,12 @@
 #include "Font.h"
 #include "algo.h"
 
-/*
-template<typename A, typename B>
-struct Renderer {
-	Renderer(A a, B b): a(a), b(b) {}
-
-	void operator()(Display &display) {
-		a.render(display);
-		b.render(display);
-	}
-
-	A a;
-	B b;
-};*/
-
 template<typename A, typename... B>
 struct Renderer {
 	Renderer(A a, B... b): a(a), b(Renderer<B...>(b...)) {}
 
-	void operator()(Display &display) {
-		a.render(display);
-		b.render(display);
-	}
-
 	void render(Display &display) {
+		a.render(display);
 		b.render(display);
 	}
 
@@ -44,10 +26,6 @@ template<>
 struct Renderer<I2CRenderer> {
 	Renderer(I2CRenderer a): a(a) {
 
-	}
-
-	void operator()(Display &display) {
-		a.render(display);
 	}
 
 	void render(Display &display) {
@@ -85,7 +63,8 @@ int main(int argc, char **argv) {
 		//display.revCols();
 		//display.rotate(1);
 		//renderer.render(display);
-		r(display);
+		r.render(display);
+		std::cout << "==============\n";
 
 		usleep(50000);
 	}
