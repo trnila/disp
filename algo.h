@@ -6,8 +6,7 @@
 class BitsAlgo {
 public:
 	BitsAlgo(Input *input): input(input) {
-		currentLetter = 0;
-		this->input = input;
+		this->currentLetter = 0;
 		this->shiftInLetter = 0;
 	}
 
@@ -17,7 +16,7 @@ public:
 
 		int rendL = currentLetter; // current rendered letter
 		int pos = this->shiftInLetter; // shiftInLetter in rendered letter
-		for(int row = 0; row < Display::ROWS; row++){
+		for(int row = 0; row < Display::ROWS; ++row) {
 			for (int col = 0; col < Display::COLS; col++) {
 				if(pos >= input->font->sizes[text[rendL]]) {
 					rendL = (rendL + 1) % input->len;
@@ -32,10 +31,10 @@ public:
 					display.at(col, row).b = this->input->colors[rendL].b;
 				}
 			}
-			pos++;
+			++pos;
 		}
 
-		this->shiftInLetter++;
+		++this->shiftInLetter;
 		if(this->shiftInLetter >= input->font->sizes[text[currentLetter]] + 1) {
 			this->currentLetter = (currentLetter + 1) % input->len;
 			this->shiftInLetter = input->font->starts[text[this->currentLetter]];
