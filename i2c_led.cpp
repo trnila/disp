@@ -22,9 +22,9 @@ struct Renderer {
 	Renderer<B...> b;
 };
 
-template<>
-struct Renderer<I2CRenderer> {
-	Renderer(I2CRenderer a): a(a) {
+template<typename T>
+struct Renderer<T> {
+	Renderer(T a): a(a) {
 
 	}
 
@@ -32,7 +32,7 @@ struct Renderer<I2CRenderer> {
 		a.render(display);
 	}
 
-	I2CRenderer a;
+	T a;
 };
 
 int main(int argc, char **argv) {
