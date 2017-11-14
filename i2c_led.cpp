@@ -6,6 +6,7 @@
 #include "Display.h"
 #include "OstreamRenderer.h"
 #include "I2CRenderer.h"
+#include "Font.h"
 #include "algo.h"
 
 
@@ -17,18 +18,20 @@ int main(int argc, char **argv) {
 	const char *text = argv[1];
 	srand(time(NULL));
 
+	Font font(font8x8_basic);
+
 	Input input;
-	newInput(&input, text);
-	input.font = font8x8_basic;
+	newInput(&input, text, &font);
 
 	Display display;
-	I2CRenderer rendererA("/dev/i2c-2");
+	//I2CRenderer rendererA("/dev/i2c-2");
 	OstreamRenderer renderer(std::cout);
 	BitsAlgo algo(&input);
 
 	for(;;) {
 		display.clear();
 		algo.next(display);
+
 		//display.rev();
 		//display.revCols();
 		//display.rotate(1);
