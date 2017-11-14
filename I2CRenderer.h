@@ -1,5 +1,13 @@
 #pragma once
 #include <stdexcept>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <linux/i2c-dev.h>
+#include <errno.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 class I2CRenderer {
 public:
@@ -25,7 +33,7 @@ public:
 			throw std::runtime_error("Failed to write to the i2c bus.\n");
 		}
 
-		const int size = display.size() * sizeof(uint8_t) * 3;
+		const int size = display.size() * sizeof(uint8_t);
 		if (write(fd, &display.begin(), size) != size) {
 			throw std::runtime_error("Failed to write to the i2c bus.\n");
 		}

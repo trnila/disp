@@ -1,7 +1,7 @@
 #pragma once
 #include <algorithm>
 
-struct Pixel {
+struct __attribute__ ((packed)) Pixel {
 	uint8_t r, g, b;
 };
 
@@ -34,6 +34,14 @@ public:
 
 	Pixel& begin() {
 		return *pixels;
+	}
+
+	Pixel& end() {
+		return pixels[ROWS * COLS];
+	}
+
+	int size() {
+		return ROWS * COLS * 3;
 	}
 
 	Pixel& at(int row, int col) {
