@@ -38,6 +38,9 @@ int main(int argc, char **argv) {
 	for(;;) {
 		display.clear();
 		algo.next(display);
+		//display.rev();
+		//display.revCols();
+		//display.rotate(1);
 		renderer.render(display);
 
 		usleep(50000);

@@ -41,27 +41,25 @@ public:
 	}
 
 	void rev() {
-		for(int i = 0; i < 4; i++) {
-			for(int j = 0; j < 8; j++) {
-				std::swap(at(i, j), at(ROWS - i, j));
+		for(int row = 0; row < ROWS / 2; row++) {
+			for(int col = 0; col < COLS; col++) {
+				std::swap(at(row, col), at(ROWS - row - 1, col));
 			}
 		}
 	}
-/*
+
 	void revCols() {
-		for(int i = 0; i < 8; i++) {
-			for(int j = 0; j < 4; j++) {
-				swap(&pixels[1+i+(j*8*3)+RED  ], &pixels[1+i+((7-j)*8*3)+RED  ]);
-				swap(&pixels[1+i+(j*8*3)+GREEN  ], &pixels[1+i+((7-j)*8*3)+GREEN  ]);
-				swap(&pixels[1+i+(j*8*3)+BLUE  ], &pixels[1+i+((7-j)*8*3)+BLUE  ]);
+		for(int row = 0; row < ROWS; row++) {
+			for(int col = 0; col < COLS / 2; col++) {
+				std::swap(at(row, col), at(row, COLS - col - 1));
 			}
 		}
 	}
 
 	void transpose() {
-		for(int i = 0; i < 8; i++) {
-			for(int j = 0; j < i; j++) {
-				swap(&pixels[1+i+(j*8*3)+RED  ], &pixels[1+j+(i*8*3)+RED  ]);
+		for(int row = 0; row < ROWS; row++) {
+			for(int col = 0; col < row; col++) {
+				std::swap(at(row, col), at(col, row));
 			}
 		}
 	}
@@ -83,7 +81,6 @@ public:
 			rev();
 		}
 	}
-*/
 private:
 	Pixel *pixels;
 };
