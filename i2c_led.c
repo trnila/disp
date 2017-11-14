@@ -11,6 +11,10 @@
 #include <time.h>
 #include <string.h>
 #include "font8x8-master/font8x8.h"
+#include "Display.h"
+#include "OstreamRenderer.h"
+#include <iostream>
+#include "I2CRenderer.h"
 
 #define RED 0
 #define GREEN 8
@@ -22,59 +26,12 @@ typedef struct {
 	char b;
 } Color;
 
-uint8_t pixels[] = {
-	0x00,
-	0x1F, 0x1F, 0x1F, 0x1F, 0x14, 0x03, 0x00, 0x00,
-	0x00, 0x00, 0x03, 0x12, 0x1F, 0x1F, 0x1F, 0x1F,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07,
-
-	0x1F, 0x1F, 0x1F, 0x12, 0x03, 0x00, 0x00, 0x00,
-	0x00, 0x04, 0x14, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x1D,
-
-	0x1F, 0x1F, 0x11, 0x02, 0x00, 0x00, 0x00, 0x00,
-	0x05, 0x15, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x0B,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x09, 0x1F, 0x1F,
-
-	0x1F, 0x0F, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x17, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x0A, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x0A, 0x1F, 0x1F, 0x1F,
-
-	0x0E, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03,
-	0x1F, 0x1F, 0x1F, 0x1F, 0x1D, 0x08, 0x00, 0x00,
-	0x00, 0x00, 0x01, 0x0B, 0x1F, 0x1F, 0x1F, 0x1F,
-
-	0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x14,
-	0x1F, 0x1F, 0x1F, 0x1B, 0x07, 0x00, 0x00, 0x00,
-	0x00, 0x01, 0x0C, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F,
-
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x15, 0x1F,
-	0x1F, 0x1F, 0x19, 0x06, 0x00, 0x00, 0x00, 0x00,
-	0x02, 0x0E, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x12,
-
-	0x00, 0x00, 0x00, 0x00, 0x05, 0x17, 0x1F, 0x1F,
-	0x1F, 0x17, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x0F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x0F, 0x02,
-};
-
-uint8_t array[192];
-
 int swap(uint8_t *a, uint8_t *b) {
 	int s = *a;
 	*a = *b;
 	*b = s;
 }
-
-void display() {
-	for (int i = 0 ; i<8; i++) {
-		for(int j = 0 ; j<8; j++){
-			int set = pixels[1+i+(j*8*3)+RED  ] != 0;
-			printf(set ? "x" : " ");
-		}
-		printf("\n");
-	}
-}
-
+/*
 void rev() {
 	for(int i = 0; i < 4; i++) {
 		for(int j = 0; j < 8; j++) {
@@ -120,7 +77,7 @@ void rotate(int count) {
 		rev();
 	}
 }
-
+*/
 Color randColor() {
 	char r = 5;
 	char g = 5;
@@ -167,7 +124,7 @@ void init(Mem* impl, Input* input) {
 		int start = 0;
 		int stop = 7;
 
-		char *bitmap = font8x8_basic[i];
+		unsigned char *bitmap = font8x8_basic[i];
 		for(int j = 0; j < 8; j++) {
 			for(int row = 0; row < 8; row++) {
 				int set = bitmap[row] & 1 << (j);
@@ -191,14 +148,14 @@ void init(Mem* impl, Input* input) {
 }
 
 
-void next(Mem *impl) {
+void next(Mem *impl, Display &display) {
 	const char *text = impl->input->text;
 	int l = impl->l;
 	int len = strlen(text);
 
 
 	int rendL = l; 
-	char *bitmap = font8x8_basic[text[l]];
+	unsigned char *bitmap = font8x8_basic[text[l]];
 	int pos = impl->shift;
 	for(int j = 0; j<8; j++){ //radky
 		for (int i = 0 ; i<8; i++) {
@@ -209,9 +166,10 @@ void next(Mem *impl) {
 			}
 			int set = bitmap[i] & 1 << (pos);
 			if(set) {
-				pixels[1+i+((j)*8*3)+RED  ] = impl->input->colors[rendL].r;
-				pixels[1+i+((j)*8*3)+GREEN  ] = impl->input->colors[rendL].g;
-				pixels[1+i+((j)*8*3)+BLUE  ] = impl->input->colors[rendL].b;
+				display.at(i, j).r = impl->input->colors[rendL].r;
+				//pixels[1+i+((j)*8*3)+RED  ] = impl->input->colors[rendL].r;
+				//pixels[1+i+((j)*8*3)+GREEN  ] = impl->input->colors[rendL].g;
+				//pixels[1+i+((j)*8*3)+BLUE  ] = impl->input->colors[rendL].b;
 			}
 		}
 		pos++;
@@ -234,18 +192,7 @@ int main(int argc, char **argv) {
 	char *text = argv[1];
 	int len = strlen(text);
 
-	int file;
-	const char *filename = "/dev/i2c-2";
-	if ((file = open(filename, O_RDWR)) < 0) {
-		perror("Failed to open the i2c bus");
-		//		exit(1);
-	}
 
-	int addr = 0x46;          // The I2C address
-	if (ioctl(file, I2C_SLAVE, addr) < 0) {
-		perror("Failed to acquire bus access and/or talk to slave.\n");
-		//		exit(1);
-	}
 
 	srand(time(NULL));
 
@@ -256,23 +203,16 @@ int main(int argc, char **argv) {
 	Mem mem;
 	init(&mem, &input);
 
-	for(;;) {
-		// clear matrix
-		memset(pixels, 0, sizeof(pixels));
-		next(&mem);
-		//			revCols();
-		//			rev()
-		//			rotate();
-		//			rev();			
-		display();
+	Display display;
+//	I2CRenderer rendererA("/dev/i2c-2");
+	OstreamRenderer renderer(std::cout);
 
-		//			if (write(file,pixels,sizeof(pixels)) != sizeof(pixels) ) {
-		//				printf("Failed to write to the i2c bus.\n");
-		//				exit(1);
-		//			}
+	for(;;) {
+		display.clear();
+		next(&mem, display);
+		renderer.render(display);
+
 		usleep(50000);
 	}
-
-	close(file);
 }
 
