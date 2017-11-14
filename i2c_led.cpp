@@ -9,6 +9,7 @@
 #include "Font.h"
 #include "algo.h"
 
+/*
 template<typename A, typename B>
 struct Renderer {
 	Renderer(A a, B b): a(a), b(b) {}
@@ -20,37 +21,41 @@ struct Renderer {
 
 	A a;
 	B b;
-};
-/*
-template<typename A>
-struct Renderer{
-	Renderer(A a): a(a) {
-
-	}
-
-	void operator()(Display &display) {
-		a.renderer(display);
-	}
-
-	A a;
-};
+};*/
 
 template<typename A, typename... B>
 struct Renderer {
-	Renderer(A a, B... b): a(a), b(Renderer(b...)) {}
+	Renderer(A a, B... b): a(a), b(Renderer<B...>(b...)) {}
 
 	void operator()(Display &display) {
 		a.render(display);
 		b.render(display);
 	}
 
-	void render(Display &) {
+	void render(Display &display) {
+		b.render(display);
+	}
+
+	A a;
+	Renderer<B...> b;
+};
+
+template<>
+struct Renderer<I2CRenderer> {
+	Renderer(I2CRenderer a): a(a) {
 
 	}
 
-A a;
-Renderer b;
-};*/
+	void operator()(Display &display) {
+		a.render(display);
+	}
+
+	void render(Display &display) {
+		a.render(display);
+	}
+
+	I2CRenderer a;
+};
 
 int main(int argc, char **argv) {
 	if(argc != 2) {
@@ -70,8 +75,7 @@ int main(int argc, char **argv) {
 	OstreamRenderer renderer(std::cout);
 	BitsAlgo algo(&input);
 
-	//Renderer r(OstreamRenderer(std::cout), I2CRenderer("/dev/i2c-2"), OstreamRenderer(std::cerr));
-	Renderer r(OstreamRenderer(std::cout), I2CRenderer("/dev/i2c-2"));
+	Renderer r(OstreamRenderer(std::cout), OstreamRenderer(std::cout), I2CRenderer("/dev/i2c-2"));
 
 	for(;;) {
 		display.clear();

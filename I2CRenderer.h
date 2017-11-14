@@ -13,12 +13,12 @@ class I2CRenderer {
 public:
 	I2CRenderer(const char* i2cDev) {
 		if((fd = open(i2cDev, O_RDWR)) < 0) {
-			throw std::runtime_error("Failed to open the i2c bus");
+		//	throw std::runtime_error("Failed to open the i2c bus");
 		}
 
 		const int addr = 0x46;
 		if(ioctl(fd, I2C_SLAVE, addr) < 0) {
-			throw std::runtime_error("Failed to acquire bus access and/or talk to slave.\n");
+		//	throw std::runtime_error("Failed to acquire bus access and/or talk to slave.\n");
 		}
 	}
 
@@ -29,12 +29,12 @@ public:
 	void render(Display &display) {
 		int byte = 0x00;
 		if(write(fd, &byte, sizeof(byte)) != sizeof(byte)) {
-			throw std::runtime_error("Failed to write to the i2c bus.\n");
+			//throw std::runtime_error("Failed to write to the i2c bus.\n");
 		}
 
 		const int size = display.size() * sizeof(uint8_t);
 		if (write(fd, &display.begin(), size) != size) {
-			throw std::runtime_error("Failed to write to the i2c bus.\n");
+			//throw std::runtime_error("Failed to write to the i2c bus.\n");
 		}
 	}
 
